@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# Build output
+/dist/
+
+# System files
+*.log
+*.env
+
+# IDE files
+.vscode
+.idea
