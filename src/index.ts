@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Main MCP Server Entry Point
  * ArXiv API MCP Server - enables AI assistants to interact with arXiv

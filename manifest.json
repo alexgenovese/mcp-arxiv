@@ -1,0 +1,21 @@
+{
+  "manifest_version": "0.2",
+  "name": "@alexgenovese/mcp-arxiv",
+  "version": "1.0.0",
+  "description": "MCP Server for accessing arXiv API - papers, search, and metadata",
+  "author": {
+    "name": "Alex Geno"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {}
+    }
+  },
+  "license": "MIT"
+}
