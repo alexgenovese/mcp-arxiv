@@ -5,18 +5,24 @@
  * Protocol: stdio (as specified in AGENTS.md)
  */
 
-import { McpServer, StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdioServer.js';
-import { CallToolRequest, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { McpServerOptions } from '@modelcontextprotocol/sdk/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio';
+import { CallToolRequest, CallToolResult } from '@modelcontextprotocol/sdk/types';
 
 import {
   fetchFromArXiv,
   fetchPaperById
-} from './api_client.js';
+} from './api_client';
+
+import {
+  parseAtomEntries,
+  parseSingleAtomEntry,
+  extractPaperId
+} from './xml_parser';
 
 // Re-export parser utilities
-export { parseAtomEntries, parseSingleAtomEntry, extractPaperId } from './xml_parser.js';
-export * from './utils/constants.js';
+export { parseAtomEntries, parseSingleAtomEntry, extractPaperId };
+export * from './utils/constants';
 
 /**
  * Paper result interface - normalized output from all tools
@@ -71,7 +77,7 @@ function parseArxivSearchResults(xmlResponse: string): PaperResult[] {
 
     // Build paper URL canonically as per AGENTS.md rules
     const absUrlBase = absUrl || `https://arxiv.org/abs/${paperId}`;
-    const paperIdNormalized = paperId || absUrlBase.match(/\/abs\/([^\s]+)/)?.[1];
+    const paperIdNormalized = paperId || absUrlBase.match(/\/abs\/([^\s]+)/)?.[1] || '';
     
     // Build PDF URL canonically as per AGENTS.md rules
     const pdfUrlBase = absUrlBase.replace('/abs/', '/pdf/') + (absUrlBase.endsWith('.pdf') ? '' : '');
@@ -103,7 +109,7 @@ async function arxivSearch(params: any): Promise<CallToolResult> {
     const query = params.query;
     if (!query) {
       return {
-        content: [{ type: 'text', text: 'Error: query parameter is required' }],
+        content: [{ type: 'text', text: 'Error: query parameter is required' }] as any,
         isError: true
       };
     }
@@ -129,20 +135,21 @@ async function arxivSearch(params: any): Promise<CallToolResult> {
 
     return {
       content: [
-        { type: 'text', text: `Found ${results.length} papers` }
-      ].concat(results.map(r => ({
-        type: 'text',
-        text: JSON.stringify({
-          id: r.id,
-          title: r.title,
-          summary: r.summary.substring(0, 200) + (r.summary.length > 200 ? '...' : ''),
-          abs_url: r.abs_url,
-          pdf_url: r.pdf_url,
-          published: r.published,
-          authors: r.authors?.map(a => a.name),
-          categories: r.categories
-        }, null, 2)
-      }))),
+        { type: 'text' as const, text: `Found ${results.length} papers` },
+        ...results.map(r => ({
+          type: 'text' as const,
+          text: JSON.stringify({
+            id: r.id,
+            title: r.title,
+            summary: r.summary.substring(0, 200) + (r.summary.length > 200 ? '...' : ''),
+            abs_url: r.abs_url,
+            pdf_url: r.pdf_url,
+            published: r.published,
+            authors: r.authors?.map(a => a.name),
+            categories: r.categories
+          }, null, 2)
+        }))
+      ],
       isStructured: true,
       structuredContent: {
         type: 'array',
@@ -160,7 +167,7 @@ async function arxivSearch(params: any): Promise<CallToolResult> {
     };
   } catch (error) {
     return {
-      content: [{ type: 'text', text: `Search failed: ${(error as Error).message}` }],
+      content: [{ type: 'text' as const, text: `Search failed: ${(error as Error).message}` }],
       isError: true
     };
   }
@@ -175,7 +182,7 @@ async function arxivGetPaper(params: any): Promise<CallToolResult> {
     const paperId = params.paper_id;
     if (!paperId) {
       return {
-        content: [{ type: 'text', text: 'Error: paper_id parameter is required' }],
+        content: [{ type: 'text' as const, text: 'Error: paper_id parameter is required' }],
         isError: true
       };
     }
@@ -188,27 +195,26 @@ async function arxivGetPaper(params: any): Promise<CallToolResult> {
     
     if (!entry || !entry.id) {
       return {
-        content: [{ type: 'text', text: `Error: Paper ${paperId} not found` }],
+        content: [{ type: 'text' as const, text: `Error: Paper ${paperId} not found` }],
         isError: true
       };
     }
 
     return {
       content: [
-        { type: 'text', text: `Retrieved paper: ${entry.title}` }
-      ].concat([
-        { type: 'text', text: JSON.stringify({
+        { type: 'text' as const, text: `Retrieved paper: ${entry.title}` },
+        { type: 'text' as const, text: JSON.stringify({
           id: entry.id.replace(/^http:\/\/arxiv.org\/abs\//, ''),
           title: entry.title,
           summary: entry.summary || '',
           abs_url: `https://arxiv.org/abs/${entry.id.replace(/^http:\/\/arxiv.org\/abs\//, '')}`,
           pdf_url: `https://arxiv.org/pdf/${entry.id.replace(/^http:\/\/arxiv.org\/abs\//, '')}`,
-          published: entry.published,
+          published: entry.arxivMetadata?.published,
           updated: entry.updated,
           authors: entry.authors,
           categories: entry.categories
         }, null, 2) }
-      ]),
+      ],
       isStructured: true,
       structuredContent: {
         type: 'object',
@@ -218,7 +224,7 @@ async function arxivGetPaper(params: any): Promise<CallToolResult> {
           summary: entry.summary,
           abs_url: `https://arxiv.org/abs/${entry.id.replace(/^http:\/\/arxiv.org\/abs\//, '')}`,
           pdf_url: `https://arxiv.org/pdf/${entry.id.replace(/^http:\/\/arxiv.org\/abs\//, '')}`,
-          published: entry.published,
+          published: entry.arxivMetadata?.published,
           updated: entry.updated,
           authors: entry.authors,
           categories: entry.categories
@@ -227,7 +233,7 @@ async function arxivGetPaper(params: any): Promise<CallToolResult> {
     };
   } catch (error) {
     return {
-      content: [{ type: 'text', text: `Failed to get paper: ${(error as Error).message}` }],
+      content: [{ type: 'text' as const, text: `Failed to get paper: ${(error as Error).message}` }],
       isError: true
     };
   }
@@ -242,21 +248,20 @@ async function arxivGetPdfUrl(params: any): Promise<CallToolResult> {
     const paperId = params.paper_id;
     if (!paperId) {
       return {
-        content: [{ type: 'text', text: 'Error: paper_id parameter is required' }],
+        content: [{ type: 'text' as const, text: 'Error: paper_id parameter is required' }],
         isError: true
       };
     }
 
     return {
       content: [
-        { type: 'text', text: `PDF URLs for paper ${paperId}` }
-      ].concat([
-        { type: 'text', text: JSON.stringify({
+        { type: 'text' as const, text: `PDF URLs for paper ${paperId}` },
+        { type: 'text' as const, text: JSON.stringify({
           id: paperId,
           abs_url: `https://arxiv.org/abs/${paperId}`,
           pdf_url: `https://arxiv.org/pdf/${paperId}`
         }, null, 2) }
-      ]),
+      ],
       isStructured: true,
       structuredContent: {
         type: 'object',
@@ -269,7 +274,7 @@ async function arxivGetPdfUrl(params: any): Promise<CallToolResult> {
     };
   } catch (error) {
     return {
-      content: [{ type: 'text', text: `Failed to get PDF URL: ${(error as Error).message}` }],
+      content: [{ type: 'text' as const, text: `Failed to get PDF URL: ${(error as Error).message}` }],
       isError: true
     };
   }
@@ -284,7 +289,7 @@ async function arxivRelatedPapers(params: any): Promise<CallToolResult> {
     const paperId = params.paper_id;
     if (!paperId) {
       return {
-        content: [{ type: 'text', text: 'Error: paper_id parameter is required' }],
+        content: [{ type: 'text' as const, text: 'Error: paper_id parameter is required' }],
         isError: true
       };
     }
@@ -297,14 +302,14 @@ async function arxivRelatedPapers(params: any): Promise<CallToolResult> {
     
     if (!entry) {
       return {
-        content: [{ type: 'text', text: `Error: Paper ${paperId} not found` }],
+        content: [{ type: 'text' as const, text: `Error: Paper ${paperId} not found` }],
         isError: true
       };
     }
 
     return {
       content: [
-        { type: 'text', text: `No dedicated related papers API. Use arxiv_search with topic keywords from this paper's title or abstract.` }
+        { type: 'text' as const, text: `No dedicated related papers API. Use arxiv_search with topic keywords from this paper's title or abstract.` }
       ],
       isStructured: true,
       structuredContent: {
@@ -318,7 +323,7 @@ async function arxivRelatedPapers(params: any): Promise<CallToolResult> {
     };
   } catch (error) {
     return {
-      content: [{ type: 'text', text: `Failed to get related papers: ${(error as Error).message}` }],
+      content: [{ type: 'text' as const, text: `Failed to get related papers: ${(error as Error).message}` }],
       isError: true
     };
   }
@@ -333,7 +338,7 @@ async function arxivQueryAuthors(params: any): Promise<CallToolResult> {
     const authorName = params.author;
     if (!authorName) {
       return {
-        content: [{ type: 'text', text: 'Error: author parameter is required' }],
+        content: [{ type: 'text' as const, text: 'Error: author parameter is required' }],
         isError: true
       };
     }
@@ -350,16 +355,17 @@ async function arxivQueryAuthors(params: any): Promise<CallToolResult> {
 
     return {
       content: [
-        { type: 'text', text: `Found ${results.length} papers related to author "${authorName}"` }
-      ].concat(results.map(r => ({
-        type: 'text',
-        text: JSON.stringify({
-          id: r.id,
-          title: r.title,
-          authors: r.authors?.map(a => a.name),
-          abs_url: r.abs_url
-        }, null, 2)
-      }))),
+        { type: 'text' as const, text: `Found ${results.length} papers related to author "${authorName}"` },
+        ...results.map(r => ({
+          type: 'text' as const,
+          text: JSON.stringify({
+            id: r.id,
+            title: r.title,
+            authors: r.authors?.map(a => a.name),
+            abs_url: r.abs_url
+          }, null, 2)
+        }))
+      ],
       isStructured: true,
       structuredContent: {
         type: 'array',
@@ -373,7 +379,7 @@ async function arxivQueryAuthors(params: any): Promise<CallToolResult> {
     };
   } catch (error) {
     return {
-      content: [{ type: 'text', text: `Failed to query authors: ${(error as Error).message}` }],
+      content: [{ type: 'text' as const, text: `Failed to query authors: ${(error as Error).message}` }],
       isError: true
     };
   }
@@ -388,7 +394,7 @@ async function arxivGetFeed(params: any): Promise<CallToolResult> {
     const category = params.category;
     if (!category) {
       return {
-        content: [{ type: 'text', text: 'Error: category parameter is required' }],
+        content: [{ type: 'text' as const, text: 'Error: category parameter is required' }],
         isError: true
       };
     }
@@ -404,16 +410,17 @@ async function arxivGetFeed(params: any): Promise<CallToolResult> {
 
     return {
       content: [
-        { type: 'text', text: `Found ${results.length} papers in category ${category}` }
-      ].concat(results.map(r => ({
-        type: 'text',
-        text: JSON.stringify({
-          id: r.id,
-          title: r.title,
-          categories: r.categories,
-          abs_url: r.abs_url
-        }, null, 2)
-      }))),
+        { type: 'text' as const, text: `Found ${results.length} papers in category ${category}` },
+        ...results.map(r => ({
+          type: 'text' as const,
+          text: JSON.stringify({
+            id: r.id,
+            title: r.title,
+            categories: r.categories,
+            abs_url: r.abs_url
+          }, null, 2)
+        }))
+      ],
       isStructured: true,
       structuredContent: {
         type: 'array',
@@ -427,7 +434,7 @@ async function arxivGetFeed(params: any): Promise<CallToolResult> {
     };
   } catch (error) {
     return {
-      content: [{ type: 'text', text: `Failed to get feed: ${(error as Error).message}` }],
+      content: [{ type: 'text' as const, text: `Failed to get feed: ${(error as Error).message}` }],
       isError: true
     };
   }
@@ -444,49 +451,19 @@ function registerTools(server: McpServer): void {
       inputSchema: {
         type: 'object',
         properties: {
-          query: {
-            type: 'string',
-            description: 'The search query string'
-          },
-          start: {
-            type: 'integer',
-            description: 'Offset for pagination (default: 1)'
-          },
-          max_results: {
-            type: 'integer',
-            description: 'Maximum number of results (default: 10, max: 20)'
-          },
-          sort_by: {
-            type: 'string',
-            description: 'Sort by field (default: timestamp)',
-            enum: ['timestamp']
-          },
-          sort_order: {
-            type: 'string',
-            description: 'Sort order (default: descending)',
-            enum: ['descending', 'ascending']
-          },
-          search_field: {
-            type: 'string',
-            description: 'Field to search in',
-            enum: ['all_text', 'titles', 'abstracts', 'author']
-          },
-          date_from: {
-            type: 'string',
-            description: 'Start date for date range filter (ISO format)'
-          },
-          date_to: {
-            type: 'string',
-            description: 'End date for date range filter (ISO format)'
-          },
-          category: {
-            type: 'string',
-            description: 'Restrict to a specific category (e.g., cs.LG, quant-ph)'
-          }
+          query: { type: 'string', description: 'The search query string' },
+          start: { type: 'integer', description: 'Offset for pagination (default: 1)' },
+          max_results: { type: 'integer', description: 'Maximum number of results (default: 10, max: 20)' },
+          sort_by: { type: 'string', description: 'Sort by field (default: timestamp)', enum: ['timestamp'] },
+          sort_order: { type: 'string', description: 'Sort order (default: descending)', enum: ['descending', 'ascending'] },
+          search_field: { type: 'string', description: 'Field to search in', enum: ['all_text', 'titles', 'abstracts', 'author'] },
+          date_from: { type: 'string', description: 'Start date for date range filter (ISO format)' },
+          date_to: { type: 'string', description: 'End date for date range filter (ISO format)' },
+          category: { type: 'string', description: 'Restrict to a specific category (e.g., cs.LG, quant-ph)' }
         },
         required: ['query']
       }
-    },
+    } as any,
     arxivSearch
   );
 
@@ -496,15 +473,10 @@ function registerTools(server: McpServer): void {
       description: 'Get full metadata for a specific arXiv paper by ID',
       inputSchema: {
         type: 'object',
-        properties: {
-          paper_id: {
-            type: 'string',
-            description: 'The arXiv paper ID (e.g., 2401.12345)'
-          }
-        },
+        properties: { paper_id: { type: 'string', description: 'The arXiv paper ID (e.g., 2401.12345)' } },
         required: ['paper_id']
       }
-    },
+    } as any,
     arxivGetPaper
   );
 
@@ -512,17 +484,8 @@ function registerTools(server: McpServer): void {
     'arxiv_get_pdf_url',
     {
       description: 'Get the canonical absolute and PDF URLs for a paper',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          paper_id: {
-            type: 'string',
-            description: 'The arXiv paper ID (e.g., 2401.12345)'
-          }
-        },
-        required: ['paper_id']
-      }
-    },
+      inputSchema: { type: 'object', properties: { paper_id: { type: 'string', description: 'The arXiv paper ID (e.g., 2401.12345)' } }, required: ['paper_id'] }
+    } as any,
     arxivGetPdfUrl
   );
 
@@ -530,21 +493,8 @@ function registerTools(server: McpServer): void {
     'arxiv_related_papers',
     {
       description: 'Get related papers for a given paper ID',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          paper_id: {
-            type: 'string',
-            description: 'The arXiv paper ID'
-          },
-          max_results: {
-            type: 'integer',
-            description: 'Maximum related papers to return'
-          }
-        },
-        required: ['paper_id']
-      }
-    },
+      inputSchema: { type: 'object', properties: { paper_id: { type: 'string', description: 'The arXiv paper ID' }, max_results: { type: 'integer', description: 'Maximum related papers to return' } }, required: ['paper_id'] }
+    } as any,
     arxivRelatedPapers
   );
 
@@ -552,21 +502,8 @@ function registerTools(server: McpServer): void {
     'arxiv_query_authors',
     {
       description: 'Query papers by author name',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          author: {
-            type: 'string',
-            description: 'Author name to search for'
-          },
-          max_results: {
-            type: 'integer',
-            description: 'Maximum results to return'
-          }
-        },
-        required: ['author']
-      }
-    },
+      inputSchema: { type: 'object', properties: { author: { type: 'string', description: 'Author name to search for' }, max_results: { type: 'integer', description: 'Maximum results to return' } }, required: ['author'] }
+    } as any,
     arxivQueryAuthors
   );
 
@@ -574,29 +511,8 @@ function registerTools(server: McpServer): void {
     'arxiv_get_feed',
     {
       description: 'Get papers from an arXiv RSS/Atom feed by category',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          category: {
-            type: 'string',
-            description: 'ArXiv category code (e.g., cs.LG, quant-ph)'
-          },
-          format: {
-            type: 'string',
-            description: 'Feed format (atom or rss, default: atom)'
-          },
-          max_results: {
-            type: 'integer',
-            description: 'Maximum papers to return'
-          },
-          published_until: {
-            type: 'string',
-            description: 'Filter papers published before this date (ISO format)'
-          }
-        },
-        required: ['category']
-      }
-    },
+      inputSchema: { type: 'object', properties: { category: { type: 'string', description: 'ArXiv category code (e.g., cs.LG, quant-ph)' }, format: { type: 'string', description: 'Feed format (atom or rss, default: atom)' }, max_results: { type: 'integer', description: 'Maximum papers to return' }, published_until: { type: 'string', description: 'Filter papers published before this date (ISO format)' } }, required: ['category'] }
+    } as any,
     arxivGetFeed
   );
 }

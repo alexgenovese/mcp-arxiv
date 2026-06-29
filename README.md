@@ -1,233 +1,221 @@
-# npx skills CLI
+# MCP ArXiv Server
 
-The Skills CLI (`npx skills`) is the package manager for the open agent skills ecosystem. Skills are modular packages that extend agent capabilities with specialized knowledge, workflows, and tools.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![npm](https://img.shields.io/npm/v/@alexgenovese/mcp-arxiv)](https://www.npmjs.com/package/@alexgenovese/mcp-arxiv)
+[![npm downloads](https://img.shields.io/npm/dm/@alexgenovese/mcp-arxiv)](https://www.npmjs.com/package/@alexgenovese/mcp-arxiv)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MCP](https://img.shields.io/badge/MCP-Protocol-9B59B6?logo=modelcontextprotocol)](https://modelcontextprotocol.io)
+[![Smithery](https://img.shields.io/badge/Smithery-Available-FF6B35?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJMMyA3djEwbDkgNSA5LTVIN0wxMiAweiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=)](https://smithery.ai/server/@alexgenovese/mcp-arxiv)
+[![Glama](https://img.shields.io/badge/Glama-Listed-3B82F6?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMTNy41MiAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTgtOC04czMuNTgtOCA4LTggOCAzLjU4IDggOC0zLjU4IDgtOCA4eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=)](https://glama.ai/mcp/servers)
+[![GitHub stars](https://img.shields.io/github/stars/alexgenovese/mcp-arxiv?style=social)](https://github.com/alexgenovese/mcp-arxiv)
 
-## What is the Skills CLI?
+An [MCP Server](https://modelcontextprotocol.io) for accessing the [arXiv API](https://arxiv.org). Enables AI assistants to search papers, retrieve metadata, and access PDFs from arXiv.
 
-Skills are installable, modular extensions that you can add to your agent to give it new capabilities. Think of them as plugins or tools that your agent can use to help you accomplish specific tasks.
+## Features
 
-### Key Features
+- 📚 Search arXiv papers by query
+- 📄 Retrieve full paper metadata by ID
+- 🔗 Direct links to abstract and PDF URLs
+- 🚀 Fast XML parsing for Atom feed responses
+- ✅ TypeScript with strict typing
 
-- **Modular**: Each skill is a self-contained package with specific functionality
-- **Open Ecosystem**: Skills are community-driven and shareable
-- **Easy Installation**: Install skills directly from the command line
-- **Browse & Search**: Discover new skills through an interactive UI
+## Installation
 
-## Quick Start
-
-```bash
-# Search for skills
-npx skills find [query]
-
-# Install a skill from GitHub
-npx skills add owner/repo@skill-name
-
-# Check for updates
-npx skills check
-
-# Update all installed skills
-npx skills update
-```
-
-## Common Commands
-
-### Search for Skills
-
-Use the find command to discover skills by keyword or domain:
+### From npm (Recommended)
 
 ```bash
-# Search for React-related skills
-npx skills find react
+# Install via npm
+npm install -g @alexgenovese/mcp-arxiv
 
-# Search for testing skills
-npx skills find testing
+# Or via pnpm
+pnpm add -g @alexgenovese/mcp-arxiv
 
-# Search for deployment skills
-npx skills find deploy
+# Or via yarn
+yarn add -g @alexgenovese/mcp-arxiv
 ```
 
-### Install Skills
-
-Install skills globally (user-level):
+### Build from Source
 
 ```bash
-# Install from GitHub repository
-npx skills add @owner/skill-package@skill-name
-
-# Install globally and skip confirmation
-npx skills add @owner/skill-package@skill-name -g -y
+git clone https://github.com/alexgenovese/mcp-arxiv.git
+cd mcp-arxiv
+npm install
+npm run build
 ```
 
-### Manage Skills
+### Installation via Smithery
 
 ```bash
-# Check for available updates
-npx skills check
-
-# Update all installed skills
-npx skills update
-
-# View installed skills
-npx skills
+# Install via smithery
+npx smithery install @alexgenovese/mcp-arxiv
 ```
-
-## How to Use Skills
-
-Once installed, your agent will have access to the newly added skill capabilities. The skill defines which tools or workflows become available to the agent.
-
-### Example Workflow
-
-1. **Identify your need**: "I need help with React performance optimization"
-2. **Search for skills**: `npx skills find react performance`
-3. **Review options**: Check install count, source reputation, and GitHub stars
-4. **Install**: `npx skills add vercel-labs/agent-skills@react-performance`
-5. **Agent access**: The skill is now available to your agent
-
-## Finding Skills
-
-### Option 1: Browse the Leaderboard
-
-Visit [skills.sh](https://skills.sh/) to browse the leaderboard, which ranks skills by total installs. Top skills include:
-
-- `vercel-labs/agent-skills` — React, Next.js, web design (100K+ installs)
-- `anthropics/skills` — Frontend design, document processing (100K+ installs)
-
-### Option 2: Search by Keywords
-
-Use targeted search queries for better results:
 
 ```bash
-# Be specific: "react testing" is better than just "testing"
-npx skills find "react testing"
+# Or stream via smithery
+npx smithery stream @alexgenovese/mcp-arxiv
 
-# Try alternative terms
-npx skills find deploy
-npx skills find deployment
-npx skills find "ci-cd"
+# Run locally with smithery
+npx @smithery/cli r @alexgenovese/mcp-arxiv
 ```
 
-### Quality Verification
-
-Before installing a skill, verify:
-
-1. **Install count**: Prefer skills with 1K+ installs
-2. **Source reputation**: Official sources (`vercel-labs`, `anthropics`, `microsoft`) are more trustworthy
-3. **GitHub stars**: Check the source repository for <100 stars, proceed with caution
-
-## Common Skill Categories
-
-| Category | Example Queries |
-|----------|-----------------|
-| Web Development | react, nextjs, typescript, css, tailwind |
-| Testing | testing, jest, playwright, e2e |
-| DevOps | deploy, docker, kubernetes, ci-cd |
-| Documentation | docs, readme, changelog, api-docs |
-| Code Quality | review, lint, refactor, best-practices |
-| Design | ui, ux, design-system, accessibility |
-| Productivity | workflow, automation, git |
-
-## Examples
-
-### Find and Install a Skill
+### Installation via Glama
 
 ```bash
-# Find skills for a specific task
-npx skills find changelog
-
-# Install the best match
-npx skills add @username/changelog-skill@changelog
+# Glama provides MCP discovery and installation
+npx glama install @alexgenovese/mcp-arxiv
 ```
 
-### Verify Before Installing
+## Usage
+
+### Configure your MCP Client
+
+Add the MCP server configuration to your MCP client (Cursor, VS Code, Claude Desktop, etc.):
+
+**Compiled version (recommended):**
+
+```json
+{
+  "mcpServers": {
+    "arxiv": {
+      "command": "node",
+      "args": ["./dist/index.js"]
+    }
+  }
+}
+```
+
+**Development version (with source rebuild):**
+
+```json
+{
+  "mcpServers": {
+    "arxiv": {
+      "command": "npx",
+      "args": ["tsx", "src/index.ts"],
+      "cwd": "/path/to/mcp-arxiv"
+    }
+  }
+}
+```
+
+### Available Tools
+
+The MCP server provides the following tools:
+
+#### 🔍 `arxiv_search`
+Search for papers on arXiv by query.
+
+```json
+{
+  "name": "arxiv_search",
+  "arguments": {
+    "query": "machine learning neural networks",
+    "start": 0,
+    "max_results": 10,
+    "sort_by": "relevance",
+    "sort_order": "descending"
+  }
+}
+```
+
+Parameters:
+- `query`: Search query string (required)
+- `start`: Starting index for pagination (default: 0)
+- `max_results`: Maximum number of results (default: 10, max: 20)
+- `sort_by`: "relevance" or "lastUpdatedDate" (default: "relevance")
+- `sort_order`: "ascending" or "descending" (default: "descending")
+
+Returns: Array of papers with id, title, abstract, and URLs.
+
+#### 📄 `arxiv_get_paper`
+Retrieves full metadata for a specific paper by ID.
+
+```json
+{
+  "name": "arxiv_get_paper",
+  "arguments": {
+    "id": "2401.00000"
+  }
+}
+```
+
+Parameters:
+- `id`: arXiv paper ID (e.g., "2401.00000")
+
+Returns: Full paper metadata including ID, title, authors, abstract, categories, and URLs.
+
+#### 📥 `arxiv_get_feed`
+Retrieves papers from an arXiv category feed (RSS/Atom).
+
+```json
+{
+  "name": "arxiv_get_feed",
+  "arguments": {
+    "format": "atom",
+    "category": "cs.AI",
+    "limit": 20,
+    "publishedInMonths": 3
+  }
+}
+```
+
+Parameters:
+- `format`: "atom" or "rss" (default: "atom")
+- `category`: arXiv category (e.g., "cs.AI", "physics", "quant-ph")
+- `limit`: Maximum number of papers (default: 20)
+- `publishedInMonths`: Papers from last N months (default: 12, max: 24)
+
+Returns: Array of papers from the specified category.
+
+#### 🔗 `arxiv_get_pdf_url`
+Retrieves canonical PDF URL for a paper ID.
+
+```json
+{
+  "name": "arxiv_get_pdf_url",
+  "arguments": {
+    "id": "2401.00000"
+  }
+}
+```
+
+Parameters:
+- `id`: arXiv paper ID
+
+Returns: PDF URL for the specified paper.
+
+## Development
 
 ```bash
-# View skill details on skills.sh
-# https://skills.sh/{owner}/{repo}/{skill-name}
+# Install dependencies
+npm install
+
+# Run development server with type checking
+npm run dev
+
+# Build production version
+npm run build
+
+# Run tests
+npm test
 ```
 
-### When No Skills Are Found
+## License
 
-If no relevant skills exist:
+MIT License - see [LICENSE](LICENSE) file for details.
 
-1. Acknowledge no match was found
-2. The agent can still help with the task using general capabilities
-3. Consider creating your own skill with `npx skills init`
+## Contributing
 
-## Installation Guide
+Contributions are welcome! Please read our code of conduct before contributing.
 
-### Prerequisites
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-- Node.js (recommended)
-- npm or yarn
+## Acknowledgments
 
-### Installing the CLI
-
-The Skills CLI is available via npx (no installation required):
-
-```bash
-# Use without installing
-npx skills find ...
-```
-
-Or install globally:
-
-```bash
-# Install globally
-npm install -g skills-cli
-
-# Use from anywhere
-skills find ...
-```
-
-## Creating Your Own Skill
-
-If you need a specific capability but don't find an existing skill:
-
-```bash
-# Initialize a new skill project
-npx skills init my-skill-name
-
-# Follow the prompts to define your skill
-```
-
-## Restoring a Previous Chat Session
-
-## Popular Sources
-
-Many popular skills come from these reputable sources:
-
-- `vercel-labs/agent-skills` — Vercel Library, with official Vercel Engineering standards. The skill `react-best-practices` provides React best practices curated by Vercel.
-
-- `anthropics/skills` — Anthropic's official skill collection, with `frontend-design` and `document-processing` available.
-
-- `microsoft` — Microsoft's AI and productivity skills.
-
-- `ComposioHQ/awesome-claude-skills` — Community-curated tools and workflows.
-
-## Resources
-
-- **Browse Skills**: https://skills.sh/
-- **Documentation**: Available at https://skills.sh/docs
-- **GitHub**: Check each skill's repository for additional details
-
-## Troubleshooting
-
-### Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| `npx skills` not found | Ensure Node.js is installed and in your PATH |
-| Permission denied errors | Use `-g -y` flags for global installation |
-| Skill not found | Verify the repo name and skill name are correct |
-| Slow install | Check your network connection; use a CDN |
-
-### Tips
-
-1. Use specific keywords in search queries
-2. Try alternative terms if one doesn't work
-3. Check popular sources first before exploring options
-4. Verify skill quality before installing
-
----
-
-For more information, visit [skills.sh](https://skills.sh/).
+- Built with [Model Context Protocol](https://modelcontextprotocol.io)
+- Data from [arXiv API](https://arxiv.org/help/api)

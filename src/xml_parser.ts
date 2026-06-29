@@ -7,7 +7,7 @@
  * Source: https://info.arxiv.org/help/view.html
  */
 
-import { FastXMLParser } from 'fast-xml-parser';
+import { XMLParser } from 'fast-xml-parser';
 
 // Paper entry extracted from Atom feed
 export interface AtomEntry {
@@ -86,13 +86,11 @@ export const RAW_OUTPUT = false;
  * @returns Array of AtomEntry objects
  */
 export function parseAtomEntries(xmlString: string): AtomEntry[] {
-  const parser = new FastXMLParser({
+  const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
     allowBooleanAttributes: true,
-    trimValues: true,
-    arrayNodeName: '*',
-    supressEmptyNode: true
+    trimValues: true
   });
 
   const parsed = parser.parse(xmlString);
@@ -187,7 +185,7 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
   // Helper to get arxiv metadata
   const getArxivMetadata = (node: any, tagName: string): ArxivMetadata => {
     const metaNode = node[tagName];
-    if (!metaNode) return {};
+    if (!metaNode) return { id: '', title: '', summary: '', published: '', updated: '' };
     
     const meta: ArxivMetadata = {
       id: getText(metaNode, 'id'),
@@ -198,13 +196,13 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
     };
     
     if (metaNode.authors) meta.authors = getAuthors(metaNode, 'authors');
-    if (metaNode.published) meta.published = String(metaNode.published);
-    if (metaNode.updated) meta.updated = String(metaNode.updated);
+    if (metaNode.published && metaNode.published != null) meta.published = String(metaNode.published);
+    if (metaNode.updated && metaNode.updated != null) meta.updated = String(metaNode.updated);
     if (metaNode.arxivId) meta.arxivId = String(metaNode.arxivId);
     if (metaNode.primaryCategory) meta.primaryCategory = String(metaNode.primaryCategory);
     if (metaNode.summarySubmitted) meta.summarySubmitted = String(metaNode.summarySubmitted);
-    if (metaNode.journalRef) meta.journalRef = Array.isArray(metaNode.journalRef) 
-      ? metaNode.journalRef 
+    if (metaNode.journalRef) meta.journalRef = Array.isArray(metaNode.journalRef)
+      ? metaNode.journalRef
       : [metaNode.journalRef];
     if (metaNode.comment) meta.comment = String(metaNode.comment);
     if (metaNode.doi) meta.doi = String(metaNode.doi);
@@ -223,11 +221,11 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
 
   // Special handling for atom:summary高等学校 формирование
   // Check for summary-patternla ordintr
-  const handleNode = (node: any): AtomEntry => {
+  const handleNode = (node: any): AtomEntry | null => {
     const id = getText(node, 'id') || getText(node, 'ID');
     if (!id) return null;
 
-    const entry: AtomEntry = {
+    const entry: AtomEntry | null = {
       id: id.replace(/^http:\/\/arxiv.org\/abs\//, ''), // Normalize to ID format
       title: getText(node, 'title').replace(/<br>/g, '\n'),
       summary: getText(node, 'summary'),
@@ -318,7 +316,7 @@ export function parseSingleAtomEntry(xmlString: string): AtomEntry | null {
  * @returns Paper ID or null
  */
 export function extractPaperId(xmlString: string): string | null {
-  const parser = new FastXMLParser({
+  const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
     allowBooleanAttributes: true

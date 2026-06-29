@@ -1,0 +1,27 @@
+# Smithery Configuration
+# https://smithery.ai/
+
+# Your package name on npm
+package:
+  name: "@alexgenovese/mcp-arxiv"
+  npm:
+    npmRepository: '@alexgenovese/mcp-arxiv'
+
+# Only one of 'stdio' or 'obsidian' should be defined in config
+# See: https://smithery.ai/docs/get/official/mcp
+
+stdio:
+  run:
+    command: "node"
+    args: ["dist/index.js"]
+    cwd: "."
+    # or if you prefer to use the source:
+    # command: "npm"
+    # args: ["start"]
+    # cwd: "."
+
+  # supported values: "stdio", "http", "websocket", "sse", "streamable-http", "sse"
+  # See: https://smithery.ai/docs/get/official/mcp
+
+  # Try this:
+  # https://smithery.ai/playground/#stdio
