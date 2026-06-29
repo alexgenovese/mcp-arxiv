@@ -41,7 +41,7 @@ export interface ArXivSearchParams {
   search_field?: 'all_text' | 'titles' | 'abstracts' | 'author';
   
   // Sorting: recency of publication
-  sort_by?: 'timestamp';
+  sort_by?: 'submittedDate' | 'lastUpdatedDate' | 'relevance' | 'timestamp';
   sort_order?: 'descending' | 'ascending';
   
   // Content type (XML response format)
@@ -67,7 +67,7 @@ export interface ArXivSearchParams {
  * Create an Axios config for the ArXiv API request
  */
 function createAxiosConfig(params?: ArXivSearchParams): AxiosRequestConfig<any> {
-  const baseURL = 'http://export.arxiv.org/api/query';
+  const baseURL = 'https://export.arxiv.org/api/query';
   
   const config: AxiosRequestConfig<any> = {
     baseURL,
@@ -105,10 +105,14 @@ function createAxiosConfig(params?: ArXivSearchParams): AxiosRequestConfig<any> 
     config.params.search_field = params.search_field;
   }
   if (params?.sort_by) {
-    config.params.sort_by = params.sort_by;
+    let sortByValue = params.sort_by;
+    if (sortByValue === 'timestamp' || sortByValue === 'submittedDate') {
+      sortByValue = 'submittedDate';
+    }
+    config.params.sortBy = sortByValue;
   }
   if (params?.sort_order) {
-    config.params.sort_order = params.sort_order;
+    config.params.sortOrder = params.sort_order;
   }
   if (params?.output_format) {
     config.params.output_format = params.output_format;

@@ -5,7 +5,7 @@
  */
 
 // ArXiv API endpoint
-export const ARXIV_SEARCH_URL = 'http://export.arxiv.org/api/query';
+export const ARXIV_SEARCH_URL = 'https://export.arxiv.org/api/query';
 
 // RSS/Atom feed URLs by category
 export const RSS_FEED_BASE = 'https://rss.arxiv.org/rss';

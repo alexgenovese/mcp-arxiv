@@ -14,10 +14,14 @@ export interface AtomEntry {
   id: string;
   title: string;
   updated: string;
+  published?: string;
   link: AtomLink[];
   summary: string;
   authors?: AtomAuthor[];
   categories?: AtomCategory[];
+  comment?: string;
+  doi?: string;
+  journalRef?: string;
   arxivMetadata?: ArxivMetadata;
 }
 
@@ -115,15 +119,19 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
     const entryNodes = Array.isArray(node[tagName]) ? node[tagName] : [node[tagName]];
     
     for (const entry of entryNodes) {
-      if (!entry.href) continue;
+      const href = entry['@_href'] || entry.href;
+      if (!href) continue;
       
       const link: AtomLink = {
-        href: entry.href
+        href
       };
       
-      if (entry.rel) link.rel = entry.rel;
-      if (entry.type) link.type = entry.type;
-      if (entry.title) link.title = entry.title;
+      const rel = entry['@_rel'] || entry.rel;
+      if (rel) link.rel = rel;
+      const type = entry['@_type'] || entry.type;
+      if (type) link.type = type;
+      const title = entry['@_title'] || entry.title;
+      if (title) link.title = title;
       
       links.push(link);
     }
@@ -162,14 +170,17 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
     const catNodes = Array.isArray(node[tagName]) ? node[tagName] : [node[tagName]];
     
     for (const cat of catNodes) {
-      if (!cat.term) continue;
+      const term = cat['@_term'] || cat.term;
+      if (!term) continue;
       
       const categoryObj: AtomCategory = {
-        term: cat.term
+        term
       };
       
-      if (cat.scheme) categoryObj.scheme = cat.scheme;
-      if (cat.label) categoryObj.label = cat.label;
+      const scheme = cat['@_scheme'] || cat.scheme;
+      if (scheme) categoryObj.scheme = scheme;
+      const label = cat['@_label'] || cat.label;
+      if (label) categoryObj.label = label;
       
       categories.push(categoryObj);
     }
@@ -230,6 +241,7 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
       title: getText(node, 'title').replace(/<br>/g, '\n'),
       summary: getText(node, 'summary'),
       updated: getTimestamp(node, 'updated'),
+      published: getTimestamp(node, 'published'),
       link: getLinks(node, 'link')
     };
 
@@ -243,19 +255,25 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
     if (node.authors) {
       entry.authors = getAuthors(node, 'authors');
     } else if (node.author) {
-      entry.authors = [getAuthors(node, 'author')[0]];
+      entry.authors = getAuthors(node, 'author');
     }
 
     // Extract categories  
     if (node.categories) {
       entry.categories = getCategories(node, 'categories');
     } else if (node.category) {
-      entry.categories = [getCategories(node, 'category')[0]];
+      entry.categories = getCategories(node, 'category');
     }
 
-    // Extract arxiv metadata
-    if (node.arxiv_metadata) {
-      entry.arxivMetadata = getArxivMetadata(node, 'arxiv_metadata');
+    // Extract arxiv comments and metadata directly from namespace tags
+    if (node['arxiv:comment']) {
+      entry.comment = String(node['arxiv:comment']);
+    }
+    if (node['arxiv:doi']) {
+      entry.doi = String(node['arxiv:doi']);
+    }
+    if (node['arxiv:journal_ref']) {
+      entry.journalRef = String(node['arxiv:journal_ref']);
     }
 
     return entry;
@@ -276,14 +294,15 @@ export function parseAtomEntries(xmlString: string): AtomEntry[] {
   // Process entries array
   const entries = [];
   
-  if (parsed.entries) {
-    if (Array.isArray(parsed.entries)) {
-      for (const entry of parsed.entries) {
+  const feedEntries = parsed.feed?.entry;
+  if (feedEntries) {
+    if (Array.isArray(feedEntries)) {
+      for (const entry of feedEntries) {
         const result = handleNode(entry);
         if (result) entries.push(result);
       }
     } else {
-      const result = handleNode(parsed.entries);
+      const result = handleNode(feedEntries);
       if (result) entries.push(result);
     }
   }
