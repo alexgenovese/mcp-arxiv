@@ -121,12 +121,12 @@ Search for papers on arXiv by query.
 
 Parameters:
 - `query`: Search query string (required)
-- `start`: Starting index for pagination (default: 0)
+- `start`: Starting index for pagination (default: 1)
 - `max_results`: Maximum number of results (default: 10, max: 20)
-- `sort_by`: "relevance" or "lastUpdatedDate" (default: "relevance")
-- `sort_order`: "ascending" or "descending" (default: "descending")
+- `sort_by`: `"submittedDate"` (publication date), `"lastUpdatedDate"`, `"relevance"`, or `"timestamp"` (default: `"submittedDate"`)
+- `sort_order`: `"ascending"` or `"descending"` (default: `"descending"`)
 
-Returns: Array of papers with id, title, abstract, and URLs.
+Returns: Array of papers with `id`, `title`, `summary`, `abs_url`, `pdf_url`, `html_url`, `published`, `authors`, `categories`, `comment`, `doi`, and `journal_ref`.
 
 #### 📄 `arxiv_get_paper`
 Retrieves full metadata for a specific paper by ID.
@@ -135,15 +135,15 @@ Retrieves full metadata for a specific paper by ID.
 {
   "name": "arxiv_get_paper",
   "arguments": {
-    "id": "2401.00000"
+    "paper_id": "2401.00000"
   }
 }
 ```
 
 Parameters:
-- `id`: arXiv paper ID (e.g., "2401.00000")
+- `paper_id`: arXiv paper ID (e.g., "2401.00000")
 
-Returns: Full paper metadata including ID, title, authors, abstract, categories, and URLs.
+Returns: Full paper metadata including ID, title, authors, abstract, categories, URLs, and comments.
 
 #### 📥 `arxiv_get_feed`
 Retrieves papers from an arXiv category feed (RSS/Atom).
@@ -169,21 +169,21 @@ Parameters:
 Returns: Array of papers from the specified category.
 
 #### 🔗 `arxiv_get_pdf_url`
-Retrieves canonical PDF URL for a paper ID.
+Retrieves canonical absolute and PDF URLs for a paper ID.
 
 ```json
 {
   "name": "arxiv_get_pdf_url",
   "arguments": {
-    "id": "2401.00000"
+    "paper_id": "2401.00000"
   }
 }
 ```
 
 Parameters:
-- `id`: arXiv paper ID
+- `paper_id`: arXiv paper ID
 
-Returns: PDF URL for the specified paper.
+Returns: Absolute, PDF, and HTML URLs for the specified paper.
 
 ## Development
 
