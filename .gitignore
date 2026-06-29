@@ -1,6 +1,6 @@
 .roo/ 
 .DS_Store
-.mcpb
+*.mcpb
 
 # Logs
 logs
